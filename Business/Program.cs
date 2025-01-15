@@ -2,6 +2,8 @@ using Business.Data;
 using Business.Service;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +23,8 @@ builder.Services.AddHttpClient<GeocodingService>();
 
 // Add services to the container.
 builder.Services.AddDbContext<BusinessContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

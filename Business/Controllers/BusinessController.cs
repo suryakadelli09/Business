@@ -65,8 +65,12 @@ namespace Business.Controllers
         {
             if (businesDto.VisitingCard != null)
             {
-                var filePath = Path.Combine("E:\\Mphasis\\Business+backend\\Business\\Business\\uploads\\", businesDto.VisitingCard.FileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
+               
+                string currentDirectory = Directory.GetCurrentDirectory();
+                string uploadsFolderPath = Path.Combine(currentDirectory, "uploads", businesDto.VisitingCard.FileName);
+                Console.WriteLine("Uploads Folder Path: " + uploadsFolderPath);
+
+                using (var stream = new FileStream(uploadsFolderPath, FileMode.Create))
                 {
                     await businesDto.VisitingCard.CopyToAsync(stream);
                 }
@@ -86,7 +90,7 @@ namespace Business.Controllers
                     Location = businesDto.Location,
                     Latitude = businesDto.Latitude,
                     Longitude = businesDto.Longitude,
-                    VisitingCard = filePath,
+                    VisitingCard = uploadsFolderPath,
                     CategoryID = businesDto.CategoryID,
                     SubCategoryID = businesDto.SubCategoryID
                 };

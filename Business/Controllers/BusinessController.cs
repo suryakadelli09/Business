@@ -156,6 +156,100 @@ namespace Business.Controllers
             {
                 throw;
             }
-        }        
+        }
+        [HttpPut]
+        public async Task<ActionResult<bool>> UpdateBusiness([FromForm] BusinesDto businesDto)
+        {
+            try
+            {
+                // Find the business by ID
+                var existingBusiness = await _context.Businesses.FindAsync(businesDto.BusinessID);
+                if (existingBusiness == null)
+                {
+                    return NotFound(new { message = "Business not found." });
+                }
+
+                // Check if the email or business name is being changed and if it's already registered
+                bool isDuplicate = await _context.Businesses.AnyAsync(b => b.EmailId == businesDto.EmailId && b.Name == businesDto.Name && b.BusinessID != businesDto.BusinessID);
+                if (isDuplicate)
+                {
+                    return BadRequest(new { message = "Email and/or Business Name already registered." });
+                }
+
+                // If a new visiting card is uploaded, update the file path
+                if (businesDto.VisitingCard != null)
+                {
+                    // Delete the old visiting card file if it exists
+                    if (System.IO.File.Exists(existingBusiness.VisitingCard))
+                    {
+                        System.IO.File.Delete(existingBusiness.VisitingCard);
+                    }
+
+                    string currentDirectory = Directory.GetCurrentDirectory();
+                    string filePath = Path.Combine(currentDirectory, "uploads", businesDto.VisitingCard.FileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await businesDto.VisitingCard.CopyToAsync(stream);
+                    }
+                    existingBusiness.VisitingCard = filePath;
+                }
+
+                // Update the business details
+                existingBusiness.Name = businesDto.Name;
+                existingBusiness.EmailId = businesDto.EmailId;
+                existingBusiness.Description = businesDto.Description;
+                existingBusiness.Location = businesDto.Location;
+                existingBusiness.Latitude = businesDto.Latitude;
+                existingBusiness.Longitude = businesDto.Longitude;
+                existingBusiness.CategoryID = businesDto.CategoryID;
+                existingBusiness.SubCategoryID = businesDto.SubCategoryID;
+
+                // If password is provided, hash and update it
+                if (!string.IsNullOrEmpty(businesDto.Password))
+                {
+                    string hashedPassword = BCrypt.Net.BCrypt.HashPassword(businesDto.Password);
+                    existingBusiness.Password = hashedPassword;
+                }
+
+                // Save the changes to the database
+                _context.Businesses.Update(existingBusiness);
+                int updateStatus = await _context.SaveChangesAsync();
+
+                return Ok(true);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("getbusinessdetailbyid/{id}")]
+        public async Task<IActionResult> GetBusineesDetailById(int id)
+        {
+            try
+            {
+                var businesses = await _context.Businesses.Where(b => b.BusinessID == id).Select(b => new Busines
+                {
+                    BusinessID = b.BusinessID,
+                    Name = b.Name,
+                    EmailId = b.EmailId,
+                    Password = b.Password,
+                    Description = b.Description,
+                    Location = b.Location,
+                    VisitingCard = b.VisitingCard,
+                    Latitude = b.Latitude,
+                    Longitude = b.Longitude,
+                    CategoryID = b.CategoryID,
+                    SubCategoryID = b.SubCategoryID
+                }).ToListAsync();
+
+                return Ok(businesses);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }    
 }

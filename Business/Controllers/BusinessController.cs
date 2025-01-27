@@ -147,7 +147,9 @@ namespace Business.Controllers
                     Name = b.Name,
                     Description = b.Description,
                     Distancekm = b.Latitude + b.Longitude,
-                    VisitingCard = b.VisitingCard
+                    VisitingCard = b.VisitingCard,
+                    longitude = b.Longitude,
+                    Latitude = b.Latitude
                 })
                 .ToListAsync();
                 return Ok(businesses);

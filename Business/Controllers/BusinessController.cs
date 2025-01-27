@@ -80,12 +80,12 @@ namespace Business.Controllers
                 {
                     return Ok(new { message = "Email is already registered." });
                 }
-
+                string hashedPassword = BCrypt.Net.BCrypt.HashPassword(businesDto.Password);
                 var business = new Busines
                 {
                     Name = businesDto.Name,
                     EmailId = businesDto.EmailId,
-                    Password = businesDto.Password,
+                    Password = hashedPassword,
                     Description = businesDto.Description,
                     Location = businesDto.Location,
                     Latitude = businesDto.Latitude,

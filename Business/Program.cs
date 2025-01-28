@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddDirectoryBrowser();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins",
@@ -47,12 +48,12 @@ app.UseCors("AllowAllOrigins");
 app.UseAuthorization();
 
 // Serve static files from the 'uploads' directory
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(app.Environment.ContentRootPath, "uploads")),
-    RequestPath = "/uploads"
-});
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//    FileProvider = new PhysicalFileProvider(
+//        Path.Combine(app.Environment.ContentRootPath, "uploads")),
+//    RequestPath = "/uploads"
+//});
 
 app.UseSwagger();
 app.UseSwaggerUI();

@@ -61,13 +61,13 @@ namespace Business.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<bool>> RegisterBusiness([FromForm] BusinesDto businesDto)
+        public async Task<ActionResult<bool>> BusinessRegistration([FromForm] BusinesDto businesDto)
         {
             if (businesDto.VisitingCard != null)
             {
-               
+
                 string currentDirectory = Directory.GetCurrentDirectory();
-                string uploadsFolderPath = Path.Combine(currentDirectory, "uploads", businesDto.VisitingCard.FileName);
+                string uploadsFolderPath = Path.Combine(currentDirectory, "wwwroot", "VisitingCards", businesDto.VisitingCard.FileName);
                 Console.WriteLine("Uploads Folder Path: " + uploadsFolderPath);
 
                 using (var stream = new FileStream(uploadsFolderPath, FileMode.Create))
@@ -78,7 +78,8 @@ namespace Business.Controllers
                 bool isRegistered = await _context.Businesses.AnyAsync(u => u.EmailId == businesDto.EmailId && u.Name == businesDto.Name);
                 if (isRegistered)
                 {
-                    return Ok(new { message = "Email is already registered." });
+                    //return Ok(new { message = "Email is already registered." });
+                    return Conflict(new { message = "Email is already registered." });
                 }
                 string hashedPassword = BCrypt.Net.BCrypt.HashPassword(businesDto.Password);
                 var business = new Busines
@@ -95,12 +96,14 @@ namespace Business.Controllers
                     SubCategoryID = businesDto.SubCategoryID
                 };
                 _context.Businesses.Add(business);
-              int regStatus =   await _context.SaveChangesAsync();
+                int regStatus = await _context.SaveChangesAsync();
                 return Ok(true);
             }
 
             return BadRequest(false);
-        }        
+        }
+
+
 
         [HttpGet("GetCategories")]
         public async Task<IActionResult> GetCategories()

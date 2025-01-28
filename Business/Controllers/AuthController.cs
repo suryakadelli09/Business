@@ -36,31 +36,52 @@ namespace Banking_Application.Controllers
         [HttpPost("login")]
         public IActionResult Login(LoginRequest request)
         {
-            var token = "";
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-                return BadRequest("Username or password cannot be empty.");
-
-            // Try to authenticate as Business
-            var userBusiness = _context.Businesses
-                .FirstOrDefault(u => u.EmailId == request.Username && u.Password == request.Password);
-
-            // If not Business, try to authenticate as Customer
-            if (userBusiness == null)
+            try
             {
+                var token = "";
+                if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+                    return BadRequest("Username or password cannot be empty.");
+
+                // Try to authenticate as Business
+                var userBusiness = _context.Businesses
+                    .FirstOrDefault(u => u.EmailId == request.Username);
+
+                if (userBusiness != null)
+                {
+                    // Verify the password
+                    if (!BCrypt.Net.BCrypt.Verify(request.Password, userBusiness.Password))
+                    {
+                        return Unauthorized("Invalid username or password.");
+                    }
+
+                    // Generate token for Business
+                    token = GenerateBusinessToken(userBusiness);
+                    return Ok(new { token });
+                }
+
+                // Try to authenticate as Customer
                 var userCustomer = _context.Customers
-                    .FirstOrDefault(u => u.Cus_EmailId == request.Username && u.Cus_Password == request.Password);
+                    .FirstOrDefault(u => u.Cus_EmailId == request.Username);
 
-                if (userCustomer == null)
-                    return Unauthorized("Invalid username or password.");
+                if (userCustomer != null)
+                {
+                    // Verify the password
+                    if (!BCrypt.Net.BCrypt.Verify(request.Password, userCustomer.Cus_Password))
+                    {
+                        return Unauthorized("Invalid username or password.");
+                    }
 
-                // Generate token for Customer
-                token = GenerateCustomerToken(userCustomer);
-                return Ok(new { token });
+                    // Generate token for Customer
+                    token = GenerateCustomerToken(userCustomer);
+                    return Ok(new { token });
+                }
+
+                return Unauthorized("Invalid username or password.");
             }
-
-            // Generate token for Business
-            token = GenerateBusinessToken(userBusiness);
-            return Ok(new { token });
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         private string GenerateBusinessToken(Busines business)
